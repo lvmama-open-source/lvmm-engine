@@ -8,7 +8,7 @@
     <artifactId>lvmm-engine</artifactId>
     <version>1.0-SNAPSHOT</version>
     <modules>
-        <module>lgid-genertor</module>
+        <module>lgid-generatortor</module>
     </modules>
     <packaging>pom</packaging>
 

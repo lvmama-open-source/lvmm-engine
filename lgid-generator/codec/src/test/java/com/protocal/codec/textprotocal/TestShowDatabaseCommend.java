@@ -19,14 +19,14 @@ public class TestShowDatabaseCommend extends BaseTest {
     @Test
     public void testRep(){
         ByteBuf byteBuf = Unpooled.buffer();
-        byteBuf.writeBytes(this.StringToBytes("textprotocal/rep/show_database_rep.txt"));
+        byteBuf.writeBytes(this.StringToBytes("textprotocal/showdatabase/show_database_rep.txt"));
         System.out.println(ByteBufUtil.prettyHexDump(byteBuf));
     }
 
     @Test
     public void testReq(){
         ByteBuf byteBuf = Unpooled.buffer();
-        byteBuf.writeBytes(this.StringToBytes("textprotocal/show_database_req.txt"));
+        byteBuf.writeBytes(this.StringToBytes("textprotocal/showdatabase/show_database_req.txt"));
         PacketWrapper<MysqlTextPacket> packets = PacketBuilder.getInstance().buildMysqlTextProtocalPackt(byteBuf);
         System.out.println(packets.getPackets().toString());
     }

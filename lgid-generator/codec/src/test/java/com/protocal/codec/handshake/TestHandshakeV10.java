@@ -37,7 +37,7 @@ public class TestHandshakeV10 extends BaseTest {
 //        file.input
 
         ByteBuf byteBuf = Unpooled.buffer();
-        byteBuf.writeBytes(this.StringToBytes("handshake/handshakeServerRes.txt"));
+        byteBuf.writeBytes(this.StringToBytes("mysql5.6.x/handshake/handshakeServerRes.txt"));
         PacketWrapper<ServerHandshakeV10Packet> wrapper = PacketBuilder.getInstance().buildServerHandshakeV10PacketBuf(byteBuf);
 //        wrapper.get
         ServerHandshakeV10Packet serverHandshakeV10Packet = (ServerHandshakeV10Packet)wrapper.getPackets();
@@ -63,7 +63,7 @@ public class TestHandshakeV10 extends BaseTest {
     public void testHandShakeClientReq() throws Exception{
 
         ByteBuf byteBuf = Unpooled.buffer();
-        byteBuf.writeBytes(this.StringToBytes("handshake/handshakeClientReq.txt"));
+        byteBuf.writeBytes(this.StringToBytes("mysql5.6.x/handshake/handshakeClientReq.txt"));
 
         System.out.println(ByteBufUtil.prettyHexDump(byteBuf));;
 
@@ -76,7 +76,7 @@ public class TestHandshakeV10 extends BaseTest {
     @Test
     public void testHandOkPackage(){
         ByteBuf byteBuf = Unpooled.buffer();
-        byteBuf.writeBytes(this.StringToBytes("textprotocal/com_q1_res.txt"));
+        byteBuf.writeBytes(this.StringToBytes("mysql5.6.x/textprotocal/com_q1_res.txt"));
 
         System.out.println(ByteBufUtil.prettyHexDump(byteBuf));;
         PacketWrapper<OKPacket> wrapper = PacketBuilder.getInstance().buildOkPacket(byteBuf, MySQLPackets.CAPABILITY_FLAGS_ENUMS.CLIENT_PROTOCOL_41.code);

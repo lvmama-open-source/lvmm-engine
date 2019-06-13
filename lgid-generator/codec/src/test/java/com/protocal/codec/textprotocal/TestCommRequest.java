@@ -2,7 +2,6 @@ package com.protocal.codec.textprotocal;
 
 import com.lvmama.infrastructure.codec.utils.PacketBuilder;
 import com.lvmama.infrastructure.protocal.message.MySQLPackets;
-import com.lvmama.infrastructure.protocal.message.OKPacket;
 import com.lvmama.infrastructure.protocal.message.response.PacketWrapper;
 import com.lvmama.infrastructure.protocal.message.response.client.HandshakeResponse;
 import com.lvmama.infrastructure.protocal.message.response.client.MysqlTextPacket;
@@ -26,7 +25,7 @@ public class TestCommRequest extends BaseTest {
 //        file.input
 
         ByteBuf byteBuf = Unpooled.buffer();
-        byteBuf.writeBytes(this.StringToBytes("textprotocal/com_q1.txt"));
+        byteBuf.writeBytes(this.StringToBytes("mysql5.6.x/textprotocal/com_q1.txt"));
         PacketWrapper<MysqlTextPacket> packets = PacketBuilder.getInstance().buildMysqlTextProtocalPackt(byteBuf);
         System.out.println(packets.getPackets().toString());
 
@@ -39,7 +38,7 @@ public class TestCommRequest extends BaseTest {
 //        file.input
 
         ByteBuf byteBuf = Unpooled.buffer();
-        byteBuf.writeBytes(this.StringToBytes("textprotocal/com_q1_res.txt"));
+        byteBuf.writeBytes(this.StringToBytes("mysql5.6.x/textprotocal/com_q1_res.txt"));
 
         System.out.println(ByteBufUtil.prettyHexDump(byteBuf));;
         PacketWrapper<HandshakeResponse> wrapper = PacketBuilder.getInstance().buildOkPacket(byteBuf, MySQLPackets.CAPABILITY_FLAGS_ENUMS.CLIENT_PROTOCOL_41.code);

@@ -14,9 +14,9 @@ import java.util.Collections;
  * @Date: 2019/6/10 17:05
  * @Description:
  */
-public class SecureUtils {
+public class SecurityUtils {
 
-    public byte[] securePasswordAuthentication411 (byte[] payload,byte[] salt) throws NoSuchAlgorithmException {
+    public static byte[] securePasswordAuthentication411 (byte[] payload,byte[] salt) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("SHA-1");
 
         byte[] pass1 = md.digest(payload);

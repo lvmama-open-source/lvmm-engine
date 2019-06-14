@@ -8,7 +8,7 @@ lvmm-engine
  <td>认领人</td>
  </tr>
   <tr>
-  <td>sql查询</td>
+  <td>获取数据库</td>
   <td>报文解析：show_database_rep.txt <br/>
   文档地址：https://dev.mysql.com/doc/internals/en/com-query-response.html</td>
   <td>填写认领姓名</td>
@@ -25,6 +25,12 @@ lvmm-engine
         文档地址：https://dev.mysql.com/doc/internals/en/com-create-db.html</td>
         <td>填写认领姓名</td>
         </tr>
+         <tr>
+          <td>sql查询</td>
+          <td>报文解析：com_query_select_*.txt <br/>
+          文档地址：https://dev.mysql.com/doc/internals/en/com-query-response.html</td>
+          <td>填写认领姓名</td>
+          </tr>
  </table>
  
  * wireshark安装

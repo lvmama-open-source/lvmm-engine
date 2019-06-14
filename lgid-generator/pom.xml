@@ -74,5 +74,6 @@
         <module>bootstrap</module>
         <module>backend</module>
         <module>codec</module>
+        <module>frontend</module>
     </modules>
 </project>

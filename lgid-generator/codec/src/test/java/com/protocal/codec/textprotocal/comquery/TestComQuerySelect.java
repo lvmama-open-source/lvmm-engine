@@ -22,4 +22,9 @@ public class TestComQuerySelect extends BaseTest {
         PacketWrapper<MysqlTextPacket> packets = PacketBuilder.getInstance().buildMysqlTextProtocalPackt(byteBuf);
         System.out.println(packets.getPackets().toString());
     }
+
+    @Test
+    public void testComQuerySelectRep(){
+        //TO DO
+    }
 }

@@ -116,13 +116,13 @@ public class HandshakeResponse extends MySQLPackets {
     }
 
     public boolean isClientProtocal41(){
-        System.out.println("xxxxxxxx:"+(capabilityFlags &MySQLPackets.CAPABILITY_FLAGS_ENUMS.CLIENT_LONG_PASSWORD.code));
+        System.out.println("xxxxxxxx:"+(capabilityFlags & CAPABILITY_FLAGS_ENUMS.CLIENT_LONG_PASSWORD.code));
 
-        return (capabilityFlags &MySQLPackets.CAPABILITY_FLAGS_ENUMS.CLIENT_PROTOCOL_41.code)>0;
+        return (capabilityFlags & CAPABILITY_FLAGS_ENUMS.CLIENT_PROTOCOL_41.code)>0;
     }
 
     public boolean isLongPwdSet(){
-        return (capabilityFlags &MySQLPackets.CAPABILITY_FLAGS_ENUMS.CLIENT_LONG_PASSWORD.code)>0;
+        return (capabilityFlags & CAPABILITY_FLAGS_ENUMS.CLIENT_LONG_PASSWORD.code)>0;
     }
 
 

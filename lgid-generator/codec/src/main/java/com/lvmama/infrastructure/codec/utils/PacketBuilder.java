@@ -82,13 +82,13 @@ public class PacketBuilder {
 
             List<EOFPacket> eofPacketList = new ArrayList<>();
             // First EOF
-            buildWrapper(in);
+            PacketWrapper eofWrapper = buildWrapper(in);
             eofPacketList.add(buildEOFPacket(in, capabilities));
 
             List<ResultsetRowPacket> result = new ArrayList<>();
             PacketWrapper wrapper = buildWrapper(in);
             // TODO:如何识别EOF？payload长度？
-            while(wrapper.getPayloadLength() > 5){
+            while(wrapper.getPayloadLength() > eofWrapper.getPayloadLength()){
                 result.add(buildResultsetRowPacket(in, columnDefinitionPacketList));
                 wrapper = buildWrapper(in);
             }

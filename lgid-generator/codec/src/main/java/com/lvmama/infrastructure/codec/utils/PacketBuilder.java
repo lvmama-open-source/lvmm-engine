@@ -1,14 +1,20 @@
 package com.lvmama.infrastructure.codec.utils;
 
+import com.lvmama.infrastructure.protocal.message.EOFPacket;
 import com.lvmama.infrastructure.protocal.message.ErrorPacket;
 import com.lvmama.infrastructure.protocal.message.MySQLPackets;
 import com.lvmama.infrastructure.protocal.message.OKPacket;
 import com.lvmama.infrastructure.protocal.message.response.PacketWrapper;
-import com.lvmama.infrastructure.protocal.message.response.client.MysqlTextPacket;
+import com.lvmama.infrastructure.protocal.message.response.client.*;
 import com.lvmama.infrastructure.protocal.message.response.server.ServerHandshakeV10Packet;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.Assert;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @Auther: dengcheng
@@ -59,10 +65,122 @@ public class PacketBuilder {
         return wrapper;
     }
 
+    public ComQueryResponse buildComQueryResponse(ByteBuf in, int capabilities) {
+        ComQueryResponse comQueryResponse = new ComQueryResponse();
+        PacketWrapper headerWrapper = this.buildWrapper(in);
+        if(headerWrapper.getPayloadLength() > 1){
+            int header = ByteBufUtils.saftyIntToB1(in.readByte());
+            if(header == 0x00) {
+                comQueryResponse.setOkPacket(buildOKPackt(header, in, capabilities));
+            }else{
+                comQueryResponse.setErrorPacket(buildErrorPacket(header, in, capabilities));
+            }
+            return comQueryResponse;
+        }
+        ComQueryResponseHeaderPacket comQueryResponseHeaderPacket = buildComQueryResponseHeaderPacket(in);
+        comQueryResponse.setComQueryResponseHeaderPacket(comQueryResponseHeaderPacket);
 
-    public  ErrorPacket buildErrorPacket(ByteBuf in,int capabilities){
+        int fieldCount = comQueryResponseHeaderPacket.getFieldCount();
+        if(fieldCount > 0) {
+            List<ColumnDefinitionPacket> columnDefinitionPacketList = new ArrayList<>();
+            for (int i = 0; i < fieldCount; i++) {
+                this.buildWrapper(in);
+                columnDefinitionPacketList.add(buildColumnDefinitionPacket(in, capabilities));
+            }
+            comQueryResponse.setColumnDefinitionPacketList(columnDefinitionPacketList);
+
+            List<EOFPacket> eofPacketList = new ArrayList<>();
+            // First EOF
+            PacketWrapper eofWrapper = buildWrapper(in);
+            eofPacketList.add(buildEOFPacket(in, capabilities));
+
+            List<ResultsetRowPacket> result = new ArrayList<>();
+            PacketWrapper wrapper = buildWrapper(in);
+            // TODO:如何识别EOF？payload长度？
+            while(wrapper.getPayloadLength() > eofWrapper.getPayloadLength()){
+                result.add(buildResultsetRowPacket(in, columnDefinitionPacketList));
+                wrapper = buildWrapper(in);
+            }
+            comQueryResponse.setResultsetRowPacketList(result);
+
+            // Last EOF
+            eofPacketList.add(buildEOFPacket(in, capabilities));
+            comQueryResponse.setEofPacketList(eofPacketList);
+        }else if(fieldCount == 0){
+            // TODO:?
+        }else{
+            // TODO:?
+        }
+
+        return comQueryResponse;
+    }
+
+    public ComQueryResponseHeaderPacket buildComQueryResponseHeaderPacket(ByteBuf in){
+        ComQueryResponseHeaderPacket comQueryResponseHeaderPacket = new ComQueryResponseHeaderPacket();
+        int fieldCount = ByteBufUtils.B1ToInt(in.readByte());
+        comQueryResponseHeaderPacket.setFieldCount(fieldCount);
+        return comQueryResponseHeaderPacket;
+    }
+
+    /**
+     *
+     * @param in
+     * @param columnDefinitionPacketList
+     * @return
+     */
+    public ResultsetRowPacket buildResultsetRowPacket(ByteBuf in, List<ColumnDefinitionPacket> columnDefinitionPacketList) {
+        int len = columnDefinitionPacketList.size();
+        ResultsetRowPacket resultsetRowPacket = new ResultsetRowPacket();
+        Map<String, Object> result = new HashMap<>();
+        for(int i = 0;i < len; i++){
+            ColumnDefinitionPacket columnDefinitionPacket = columnDefinitionPacketList.get(i);
+//            int columnType = columnDefinitionPacket.getColumnType();
+            int size = ByteBufUtils.saftyIntToB1(in.readByte());
+            result.put(columnDefinitionPacket.getName(), ByteBufUtils.readFixedString(in, size));
+
+        }
+        resultsetRowPacket.setResult(result);
+        return resultsetRowPacket;
+    }
+
+    public EOFPacket buildEOFPacket(ByteBuf in, int capabilities) {
+        EOFPacket eofPacket = new EOFPacket();
+        eofPacket.setHeader(ByteBufUtils.saftyIntToB1(in.readByte()));
+        if((capabilities & MySQLPackets.CAPABILITY_FLAGS_ENUMS.CLIENT_PROTOCOL_41.code) > 0){
+            eofPacket.setWarnings(in.readShortLE());
+            eofPacket.setStatusFlags(in.readShortLE());
+        }
+        return eofPacket;
+    }
+
+    public ColumnDefinitionPacket buildColumnDefinitionPacket(ByteBuf in, int capabilities){
+
+        ColumnDefinitionPacket columnDefinitionPacket = new ColumnDefinitionPacket();
+        columnDefinitionPacket.setCatalog(ByteBufUtils.lengthEncoded2String(in));
+        columnDefinitionPacket.setSchemal(ByteBufUtils.lengthEncoded2String(in));
+        columnDefinitionPacket.setTable(ByteBufUtils.lengthEncoded2String(in));
+        columnDefinitionPacket.setOrgTable(ByteBufUtils.lengthEncoded2String(in));
+        columnDefinitionPacket.setName(ByteBufUtils.lengthEncoded2String(in));
+        columnDefinitionPacket.setOrgName(ByteBufUtils.lengthEncoded2String(in));
+        columnDefinitionPacket.setNextLength(ByteBufUtils.saftyIntToB1(in.readByte()));
+        columnDefinitionPacket.setCharacterSet(in.readShortLE());
+        columnDefinitionPacket.setColumnLength(in.readIntLE());
+        columnDefinitionPacket.setColumnType(ByteBufUtils.saftyIntToB1(in.readByte()));
+        if((capabilities & MySQLPackets.CAPABILITY_FLAGS_ENUMS.CLIENT_LONG_FLAG.code) > 0){
+            columnDefinitionPacket.setFlags(in.readShortLE());
+            columnDefinitionPacket.setDecimals(in.readByte());
+        }else{
+            columnDefinitionPacket.setFlags(ByteBufUtils.saftyIntToB1(in.readByte()));
+            columnDefinitionPacket.setDecimals(ByteBufUtils.saftyIntToB1(in.readByte()));
+        }
+
+        in.skipBytes(2);
+        return columnDefinitionPacket;
+    }
+
+    public  ErrorPacket buildErrorPacket(int header, ByteBuf in,int capabilities){
         ErrorPacket errorPacket = new ErrorPacket();
-        errorPacket.setHeader(ByteBufUtils.saftyIntToB1(in.readByte()));
+        errorPacket.setHeader(header);
         errorPacket.setErrorCode(in.readShortLE());
         if ((capabilities & MySQLPackets.CAPABILITY_FLAGS_ENUMS.CLIENT_PROTOCOL_41.code)>0) {
             errorPacket.setSqlStateMarker(ByteBufUtils.readFixedString(in,1));
@@ -72,15 +190,11 @@ public class PacketBuilder {
         return errorPacket;
     }
 
-    public  PacketWrapper buildOkPacket(ByteBuf in,int capabilities){
-//
-//        OK: header = 0 and length of packet > 7
-//
-//        EOF: header = 0xfe and length of packet < 9
+    public  ErrorPacket buildErrorPacket(ByteBuf in,int capabilities){
+        return buildErrorPacket(ByteBufUtils.saftyIntToB1(in.readByte()), in, capabilities);
+    }
 
-        PacketWrapper<OKPacket> wrapper =  buildWrapper(in);
-        int header = ByteBufUtils.saftyIntToB1(in.readByte());
-//
+    public OKPacket buildOKPackt(int header, ByteBuf in,int capabilities){
         OKPacket okPacket = new OKPacket();
         okPacket.setHeader(header);
         okPacket.setAffectedRows(ByteBufUtils.lengthEncodedInteger(in));
@@ -93,19 +207,34 @@ public class PacketBuilder {
             okPacket.setStatusFlags(ByteBufUtils.saftyIntToB2(in.readShortLE()));
         }
 
-         if((capabilities & MySQLPackets.CAPABILITY_FLAGS_ENUMS.CLIENT_SESSION_TRACK.code)>0) {
+        if(in.readableBytes()>0 && (capabilities & MySQLPackets.CAPABILITY_FLAGS_ENUMS.CLIENT_SESSION_TRACK.code)>0) {
             okPacket.setInfo(ByteBufUtils.lengthEncoded2String(in));
-             if ((okPacket.getStatusFlags() & MySQLPackets.SERVER_STATUS.SERVER_SESSION_STATE_CHANGED.code)>0) {
-                 okPacket.setSessionStateChanges(ByteBufUtils.lengthEncoded2String(in));
+            if ((okPacket.getStatusFlags() & MySQLPackets.SERVER_STATUS.SERVER_SESSION_STATE_CHANGED.code)>0) {
+                okPacket.setSessionStateChanges(ByteBufUtils.lengthEncoded2String(in));
 //                 }
-             }
-         } else {
-             if (in.readableBytes()>0) {
-                 okPacket.setInfo(ByteBufUtils.lengthEncoded2String(in));
-             }
-         }
+            }
+        } else {
+            if (in.readableBytes()>0) {
+                okPacket.setInfo(ByteBufUtils.readEOFString(in));
+            }
+        }
+        return okPacket;
+    }
 
-        wrapper.setPackets(okPacket);
+    public OKPacket buildOKPackt(ByteBuf in,int capabilities){
+        int header = ByteBufUtils.saftyIntToB1(in.readByte());
+        return buildOKPackt(header, in, capabilities);
+    }
+
+    public  PacketWrapper buildOkPacket(ByteBuf in,int capabilities){
+//
+//        OK: header = 0 and length of packet > 7
+//
+//        EOF: header = 0xfe and length of packet < 9
+
+        PacketWrapper<OKPacket> wrapper =  buildWrapper(in);
+
+        wrapper.setPackets(buildOKPackt(in, capabilities));
         return wrapper;
 
     }

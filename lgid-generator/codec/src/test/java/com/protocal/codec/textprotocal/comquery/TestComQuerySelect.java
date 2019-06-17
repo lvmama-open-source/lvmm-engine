@@ -32,7 +32,7 @@ public class TestComQuerySelect extends BaseTest {
         byteBuf.writeBytes(this.StringToBytes("mysql5.6.x/textprotocal/comquery/select_table_resp2.txt"));
 //        byteBuf.writeBytes(this.StringToBytes("mysql5.6.x/textprotocal/comquery/insert_table_resp.txt"));
         System.out.println(ByteBufUtil.prettyHexDump(byteBuf));
-        ComQueryResponse comQueryResponse = PacketBuilder.getInstance().buildComQueryResponse(byteBuf, cap);
+        ComQueryResponse comQueryResponse = PacketBuilder.getInstance().buildSelectResponse(byteBuf, cap);
         System.out.println(comQueryResponse.toString());
     }
 }

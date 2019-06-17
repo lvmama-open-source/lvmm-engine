@@ -58,6 +58,16 @@ public class TestShowDatabaseCommend extends BaseTest {
     }
 
     @Test
+    public void testComQueryRep(){
+        int cap = 0xffffc3ff;
+        ByteBuf byteBuf = Unpooled.buffer();
+        byteBuf.writeBytes(this.StringToBytes("mysql5.6.x/textprotocal/comquery/com_query_select_rep.txt"));
+        System.out.println(ByteBufUtil.prettyHexDump(byteBuf));
+        ComQueryResponse comQueryResponse = PacketBuilder.getInstance().buildSelectResponse(byteBuf, cap);
+        System.out.println(comQueryResponse.toString());
+    }
+
+    @Test
     public void testInsertRep(){
         int cap = 0xffffc3ff;
         ByteBuf byteBuf = Unpooled.buffer();

@@ -31,7 +31,7 @@ public class ColumnDefinitionPacket extends MySQLPackets {
 
     private String orgName;
 
-    private byte nextLength;
+    private int nextLength;
 
     private int characterSet;
 
@@ -41,7 +41,7 @@ public class ColumnDefinitionPacket extends MySQLPackets {
 
     private int flags;
 
-    private byte decimals;
+    private int decimals;
 
     public String getCatalog() {
         return catalog;
@@ -91,11 +91,11 @@ public class ColumnDefinitionPacket extends MySQLPackets {
         this.orgName = orgName;
     }
 
-    public byte getNextLength() {
+    public int getNextLength() {
         return nextLength;
     }
 
-    public void setNextLength(byte nextLength) {
+    public void setNextLength(int nextLength) {
         this.nextLength = nextLength;
     }
 
@@ -131,11 +131,11 @@ public class ColumnDefinitionPacket extends MySQLPackets {
         this.flags = flags;
     }
 
-    public byte getDecimals() {
+    public int getDecimals() {
         return decimals;
     }
 
-    public void setDecimals(byte decimals) {
+    public void setDecimals(int decimals) {
         this.decimals = decimals;
     }
 }

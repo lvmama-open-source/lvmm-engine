@@ -51,10 +51,29 @@ public class TestShowDatabaseCommend extends BaseTest {
     public void testRep2(){
         int cap = 0xffffc3ff;
         ByteBuf byteBuf = Unpooled.buffer();
-//        byteBuf.writeBytes(this.StringToBytes("mysql5.6.x/textprotocal/comquery/select_table_resp2.txt"));
+        byteBuf.writeBytes(this.StringToBytes("mysql5.6.x/textprotocal/comquery/select_table_resp2.txt"));
+        System.out.println(ByteBufUtil.prettyHexDump(byteBuf));
+        ComQueryResponse comQueryResponse = PacketBuilder.getInstance().buildSelectResponse(byteBuf, cap);
+        System.out.println(comQueryResponse.toString());
+    }
+
+    @Test
+    public void testComQueryRep(){
+        int cap = 0xffffc3ff;
+        ByteBuf byteBuf = Unpooled.buffer();
+        byteBuf.writeBytes(this.StringToBytes("mysql5.6.x/textprotocal/comquery/com_query_select_rep.txt"));
+        System.out.println(ByteBufUtil.prettyHexDump(byteBuf));
+        ComQueryResponse comQueryResponse = PacketBuilder.getInstance().buildSelectResponse(byteBuf, cap);
+        System.out.println(comQueryResponse.toString());
+    }
+
+    @Test
+    public void testInsertRep(){
+        int cap = 0xffffc3ff;
+        ByteBuf byteBuf = Unpooled.buffer();
         byteBuf.writeBytes(this.StringToBytes("mysql5.6.x/textprotocal/comquery/insert_table_resp.txt"));
         System.out.println(ByteBufUtil.prettyHexDump(byteBuf));
-        ComQueryResponse comQueryResponse = PacketBuilder.getInstance().buildComQueryResponse(byteBuf, cap);
+        ComQueryResponse comQueryResponse = PacketBuilder.getInstance().buildInsertOrUpdateResponse(byteBuf, cap);
         System.out.println(comQueryResponse.toString());
     }
 }

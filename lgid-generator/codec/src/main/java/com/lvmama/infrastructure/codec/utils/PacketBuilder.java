@@ -65,18 +65,22 @@ public class PacketBuilder {
         return wrapper;
     }
 
-    public ComQueryResponse buildComQueryResponse(ByteBuf in, int capabilities) {
+    public ComQueryResponse buildInsertOrUpdateResponse(ByteBuf in, int capabilities) {
         ComQueryResponse comQueryResponse = new ComQueryResponse();
-        PacketWrapper headerWrapper = this.buildWrapper(in);
-        if(headerWrapper.getPayloadLength() > 1){
-            int header = ByteBufUtils.saftyIntToB1(in.readByte());
-            if(header == 0x00) {
-                comQueryResponse.setOkPacket(buildOKPackt(header, in, capabilities));
-            }else{
-                comQueryResponse.setErrorPacket(buildErrorPacket(header, in, capabilities));
-            }
-            return comQueryResponse;
+        this.buildWrapper(in);
+        int header = ByteBufUtils.saftyIntToB1(in.readByte());
+        if(header == 0x00) {
+            comQueryResponse.setOkPacket(buildOKPackt(header, in, capabilities));
+        }else if(header == 0xff){
+            comQueryResponse.setErrorPacket(buildErrorPacket(header, in, capabilities));
         }
+        return comQueryResponse;
+    }
+
+
+    public ComQueryResponse buildSelectResponse(ByteBuf in, int capabilities) {
+        ComQueryResponse comQueryResponse = new ComQueryResponse();
+        this.buildWrapper(in);
         ComQueryResponseHeaderPacket comQueryResponseHeaderPacket = buildComQueryResponseHeaderPacket(in);
         comQueryResponse.setComQueryResponseHeaderPacket(comQueryResponseHeaderPacket);
 
@@ -96,15 +100,21 @@ public class PacketBuilder {
 
             List<ResultsetRowPacket> result = new ArrayList<>();
             PacketWrapper wrapper = buildWrapper(in);
-            // TODO:如何识别EOF？payload长度？
-            while(wrapper.getPayloadLength() > eofWrapper.getPayloadLength()){
-                result.add(buildResultsetRowPacket(in, columnDefinitionPacketList));
+            // payload长度>eof,或者header != 0xfe
+            int header = ByteBufUtils.saftyIntToB1(in.readByte());
+            while(wrapper.getPayloadLength() > eofWrapper.getPayloadLength() || header != 0xfe){
+                result.add(buildResultsetRowPacket(header, in, columnDefinitionPacketList));
                 wrapper = buildWrapper(in);
+                header = ByteBufUtils.saftyIntToB1(in.readByte());
             }
             comQueryResponse.setResultsetRowPacketList(result);
 
-            // Last EOF
-            eofPacketList.add(buildEOFPacket(in, capabilities));
+            // Last EOF || error
+            if(header == 0xfe){
+                eofPacketList.add(buildEOFPacket(header, in, capabilities));
+            }else if(header == 0xff){
+                comQueryResponse.setErrorPacket(buildErrorPacket(header, in, capabilities));
+            }
             comQueryResponse.setEofPacketList(eofPacketList);
         }else if(fieldCount == 0){
             // TODO:?
@@ -128,14 +138,16 @@ public class PacketBuilder {
      * @param columnDefinitionPacketList
      * @return
      */
-    public ResultsetRowPacket buildResultsetRowPacket(ByteBuf in, List<ColumnDefinitionPacket> columnDefinitionPacketList) {
+    public ResultsetRowPacket buildResultsetRowPacket(int size, ByteBuf in, List<ColumnDefinitionPacket> columnDefinitionPacketList) {
         int len = columnDefinitionPacketList.size();
         ResultsetRowPacket resultsetRowPacket = new ResultsetRowPacket();
         Map<String, Object> result = new HashMap<>();
         for(int i = 0;i < len; i++){
             ColumnDefinitionPacket columnDefinitionPacket = columnDefinitionPacketList.get(i);
 //            int columnType = columnDefinitionPacket.getColumnType();
-            int size = ByteBufUtils.saftyIntToB1(in.readByte());
+            if(i > 0) {
+                size = ByteBufUtils.saftyIntToB1(in.readByte());
+            }
             result.put(columnDefinitionPacket.getName(), ByteBufUtils.readFixedString(in, size));
 
         }
@@ -143,14 +155,18 @@ public class PacketBuilder {
         return resultsetRowPacket;
     }
 
-    public EOFPacket buildEOFPacket(ByteBuf in, int capabilities) {
+    public EOFPacket buildEOFPacket(int header, ByteBuf in, int capabilities) {
         EOFPacket eofPacket = new EOFPacket();
-        eofPacket.setHeader(ByteBufUtils.saftyIntToB1(in.readByte()));
+        eofPacket.setHeader(header);
         if((capabilities & MySQLPackets.CAPABILITY_FLAGS_ENUMS.CLIENT_PROTOCOL_41.code) > 0){
             eofPacket.setWarnings(in.readShortLE());
             eofPacket.setStatusFlags(in.readShortLE());
         }
         return eofPacket;
+    }
+
+    public EOFPacket buildEOFPacket(ByteBuf in, int capabilities) {
+        return buildEOFPacket(ByteBufUtils.saftyIntToB1(in.readByte()), in, capabilities);
     }
 
     public ColumnDefinitionPacket buildColumnDefinitionPacket(ByteBuf in, int capabilities){

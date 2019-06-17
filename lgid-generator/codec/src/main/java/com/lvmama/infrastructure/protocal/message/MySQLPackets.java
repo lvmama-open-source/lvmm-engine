@@ -51,6 +51,10 @@ public class MySQLPackets {
         MYSQL_TEXT_PROTOCAL(int code){
          this.code = code;
         }
+//
+//        public static MYSQL_TEXT_PROTOCAL getComm(int code){
+//
+//        }
     }
 
     public static   enum SERVER_STATUS {
